@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Beneficiaries from '../components/pages/Beneficiaries.svelte';
+---
+
+<Base
+  title="Chi riceve i fondi gestiti da Bruxelles"
+  description="I beneficiari dei fondi europei a gestione diretta: programmi, paesi e ricerca per nome."
+>
+  <Beneficiaries client:load />
+</Base>

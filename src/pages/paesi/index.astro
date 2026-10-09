@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import CountryIndex from '../../components/pages/CountryIndex.svelte';
+---
+
+<Base
+  title="I fondi europei paese per paese"
+  description="Quanto riceve ogni Stato membro dai fondi europei, in assoluto e per abitante, e quanto ha speso."
+>
+  <CountryIndex client:load />
+</Base>

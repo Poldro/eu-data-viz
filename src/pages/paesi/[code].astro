@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import CountryProfile from '../../components/pages/CountryProfile.svelte';
+import { COUNTRIES } from '../../lib/countries';
+
+export function getStaticPaths() {
+  return COUNTRIES.map((country) => ({ params: { code: country.code.toLowerCase() }, props: { country } }));
+}
+
+const { country } = Astro.props;
+---
+
+<Base
+  title={`${country.name}: i fondi europei`}
+  description={`Quanto riceve ${country.name} dai fondi europei, che cosa finanzia, quanto ha speso e quali regioni hanno incassato di più.`}
+>
+  <CountryProfile code={country.code} client:load />
+</Base>

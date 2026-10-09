@@ -1,0 +1,171 @@
+---
+import '../styles/global.css';
+import { meta } from '../lib/data';
+import { dateIt } from '../lib/format';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+
+const SITE_NAME = 'Conto Europa';
+const SECTIONS = [
+  { href: '/', label: 'Panoramica' },
+  { href: '/temi/', label: 'Cosa finanziano' },
+  { href: '/assorbimento/', label: 'Chi spende' },
+  { href: '/paesi/', label: 'Paesi' },
+  { href: '/beneficiari/', label: 'Beneficiari' },
+  { href: '/metodo/', label: 'Metodo' },
+];
+
+const path = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
+const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const updated = dateIt(meta.generatedAt);
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} — {SITE_NAME}</title>
+  </head>
+  <body>
+    <header class="masthead wrap">
+      <div class="strip kicker">
+        <span>Fondi europei · dati aperti della Commissione</span>
+        <span>Dati scaricati il {updated}</span>
+      </div>
+      <a class="nameplate display" href="/" data-keep-filters>Conto <em>Europa</em></a>
+      <nav aria-label="Sezioni">
+        <ol>
+          {
+            SECTIONS.map((s, i) => (
+              <li>
+                <a href={s.href} data-keep-filters aria-current={isCurrent(s.href) ? 'page' : undefined}>
+                  <span class="num">{String(i + 1).padStart(2, '0')}</span>
+                  {s.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+    </header>
+
+    <main class="wrap">
+      <slot />
+    </main>
+
+    <footer class="wrap">
+      <div class="double-rule foot">
+        <p class="kicker">Fonti</p>
+        <ul>
+          {
+            meta.sources.map((s) => (
+              <li>
+                <a href={s.url} rel="noopener">{s.name}</a>
+                <span class="figure"> · riferimento {s.asOf}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="small">
+          Elaborazione indipendente su dati pubblici della Commissione europea. Non è un prodotto ufficiale dell’Unione.
+          <a href="/metodo/">Come sono calcolati i numeri</a>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .masthead {
+    padding-top: 14px;
+  }
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .nameplate {
+    display: block;
+    padding: 18px 0 14px;
+    font-size: clamp(2.6rem, 9vw, 6.2rem);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .nameplate em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  nav {
+    border-top: 3px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  ol {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li + li {
+    border-left: 1px solid var(--rule-soft);
+  }
+  nav a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    padding: 10px 16px;
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  li:first-child a {
+    padding-left: 0;
+  }
+  nav a:hover {
+    color: var(--accent-ink);
+  }
+  nav a[aria-current='page'] {
+    box-shadow: inset 0 -3px 0 var(--accent);
+  }
+  .num {
+    color: var(--ink-3);
+    font-size: 0.62rem;
+  }
+  main {
+    padding-block: 28px 72px;
+  }
+  .foot {
+    padding: 22px 0 48px;
+    font-size: 0.86rem;
+    color: var(--ink-2);
+  }
+  .foot ul {
+    margin: 8px 0 14px;
+    padding: 0;
+    list-style: none;
+  }
+  .foot li {
+    border: 0;
+    padding: 2px 0;
+  }
+  .small {
+    max-width: var(--measure);
+  }
+</style>

@@ -1,0 +1,129 @@
+---
+import Base from '../layouts/Base.astro';
+import { meta } from '../lib/data';
+import { dateIt } from '../lib/format';
+---
+
+<Base
+  title="Metodo e fonti"
+  description="Come sono calcolati i numeri di Conto Europa: fonti, definizioni, limiti e scelte di elaborazione."
+>
+  <header class="head">
+    <p class="kicker">Metodo e fonti</p>
+    <h1 class="display">Come sono fatti questi numeri</h1>
+    <p class="standfirst">
+      Tutti i dati vengono da archivi pubblici della Commissione europea. Qui è scritto che cosa misurano, che cosa non misurano e
+      quali scelte sono state fatte per renderli confrontabili.
+    </p>
+  </header>
+
+  <div class="prose">
+    <h2>Le fonti</h2>
+    <ul>
+      {
+        meta.sources.map((s) => (
+          <li>
+            <a href={s.url} rel="noopener">{s.name}</a> — periodo di riferimento {s.asOf}.
+          </li>
+        ))
+      }
+    </ul>
+    <p>
+      I dati sono stati scaricati l’ultima volta il {dateIt(meta.generatedAt)}. Il sito è statico: i numeri cambiano solo quando la
+      procedura di aggiornamento viene rieseguita, e se una fonte non risponde o restituisce valori implausibili l’aggiornamento si
+      interrompe e resta in linea la versione precedente.
+    </p>
+
+    <h2>Tre parole: pianificato, assegnato, speso</h2>
+    <ul>
+      <li>
+        <strong>Pianificato</strong> è la quota dell’Unione messa a bilancio nei programmi approvati. Non comprende il
+        cofinanziamento nazionale.
+      </li>
+      <li>
+        <strong>Assegnato a progetti</strong> è la parte già attribuita a operazioni selezionate dalle autorità di gestione: il
+        denaro ha una destinazione, ma non è ancora stato speso.
+      </li>
+      <li>
+        <strong>Speso</strong> è la spesa che i beneficiari hanno dichiarato alle autorità di gestione. Non coincide con i
+        pagamenti della Commissione agli Stati, che arrivano dopo.
+      </li>
+    </ul>
+
+    <h2>Che cosa è compreso</h2>
+    <p>
+      Le sezioni Panoramica, Cosa finanziano, Chi spende e Paesi riguardano i fondi a <em>gestione condivisa</em>, quelli
+      programmati insieme a Stati e regioni: sviluppo regionale, sociale, coesione, transizione giusta, Interreg, pesca e i fondi
+      per migrazione e frontiere. Per il 2014–2020 è compreso anche lo sviluppo rurale.
+    </p>
+    <p>
+      <strong>Non sono compresi</strong> il PNRR e il dispositivo per la ripresa e la resilienza, i pagamenti diretti della
+      politica agricola comune e, per il 2021–2027, lo sviluppo rurale. Sono capitoli con archivi separati, non ancora integrati.
+    </p>
+
+    <h2>Le scelte di elaborazione</h2>
+    <ul>
+      <li>
+        I dati sull’attuazione sono cumulativi e pubblicati a ogni ciclo di rilevazione. Si usa <strong>solo l’ultima
+        rilevazione</strong> di ciascun programma: sommare i cicli moltiplicherebbe i totali.
+      </li>
+      <li>
+        Per il <strong>2014–2020</strong> la fonte riporta costi e spesa complessivi, Unione più Stato. La quota europea è stimata
+        applicando il tasso di cofinanziamento e non può superare il pianificato: i programmi dichiarano spesso più spesa del
+        necessario, ma l’Unione non paga oltre il tetto.
+      </li>
+      <li>
+        Gli <strong>euro per abitante</strong> dividono il pianificato dell’intero ciclo per la popolazione del 2023 (Eurostat).
+        È un ordine di grandezza, non una spesa annua.
+      </li>
+      <li>
+        I programmi di cooperazione territoriale (Interreg) coinvolgono più paesi e non sono attribuiti a nessuno: compaiono nei
+        totali europei, non nelle classifiche nazionali.
+      </li>
+      <li>
+        Le voci di dettaglio (“campi d’intervento”) sono riportate nella dicitura ufficiale inglese; i nomi degli obiettivi sono
+        stati resi in italiano corrente e non sono le denominazioni giuridiche.
+      </li>
+      <li>
+        La <strong>serie storica</strong> e i totali regionali usano i pagamenti annuali effettivi, a prezzi correnti, e si
+        fermano al 2022. L’attribuzione alle regioni è una stima della Commissione.
+      </li>
+    </ul>
+
+    <h2>I beneficiari</h2>
+    <p>
+      La sezione Beneficiari usa il Financial Transparency System, che elenca gli impegni di spesa dei fondi gestiti direttamente
+      dalla Commissione e dalle sue agenzie. Gli importi sono <em>impegni</em> assunti nell’anno, non pagamenti. Nei consorzi la
+      cifra può comparire per intero sul capofila. Il paese è quello della sede legale del beneficiario.
+    </p>
+    <p>
+      Lo stesso beneficiario è riconosciuto dalla partita IVA quando presente, altrimenti da nome e paese: omonimie e varianti di
+      scrittura possono dividere o unire soggetti per errore. Gli importi non divulgati contano zero. Le persone fisiche entrano
+      nei totali ma non vengono mai elencate per nome.
+    </p>
+
+    <h2>Colori e accessibilità</h2>
+    <p>
+      Le grandezze usano una sola tinta dal chiaro allo scuro; il vermiglio segnala soltanto ciò che è selezionato o l’Italia. I
+      quattro colori della serie storica sono stati verificati per i lettori con daltonismo. Ogni grafico ha una vista tabellare e
+      i dati scaricabili in CSV.
+    </p>
+
+    <h2>Errori e segnalazioni</h2>
+    <p>
+      Questa è un’elaborazione indipendente, non un prodotto ufficiale dell’Unione europea. Se un numero non torna, la fonte
+      originale è sempre linkata sotto il grafico: è quella che fa fede.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding: 8px 0 12px;
+  }
+  h1 {
+    margin: 10px 0 14px;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    max-width: 18ch;
+  }
+</style>

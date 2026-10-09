@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Themes from '../components/pages/Themes.svelte';
+---
+
+<Base
+  title="Cosa finanziano i fondi europei"
+  description="Le voci di spesa dei fondi europei, obiettivo per obiettivo, e quanta parte è già stata spesa."
+>
+  <Themes client:load />
+</Base>

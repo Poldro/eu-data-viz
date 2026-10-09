@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Absorption from '../components/pages/Absorption.svelte';
+---
+
+<Base
+  title="Chi spende i fondi europei"
+  description="La classifica dei paesi per capacità di spesa dei fondi europei, con il dettaglio per fondo e obiettivo."
+>
+  <Absorption client:load />
+</Base>
