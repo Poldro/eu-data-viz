@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Regions from '../components/pages/Regions.svelte';
+---
+
+<Base
+  title="I fondi europei regione per regione"
+  description="Mappa dei pagamenti dell’Unione europea alle regioni dal 1989, in euro per abitante e in valore assoluto, per periodo di programmazione."
+>
+  <Regions client:load />
+</Base>

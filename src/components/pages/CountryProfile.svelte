@@ -14,6 +14,7 @@
   import Tooltip from '../Tooltip.svelte';
   import HistoricArea, { type Series } from '../charts/HistoricArea.svelte';
   import RankBars, { type RankItem } from '../charts/RankBars.svelte';
+  import RegionMap, { type RegionDatum } from '../charts/RegionMap.svelte';
 
   const { code }: { code: string } = $props();
 
@@ -98,8 +99,25 @@
       key: r.id,
       label: r.name || r.id,
       value: r.total,
-      detail: `2014–2020: ${eur(r.byPeriod['2014-2020'] ?? 0)}`,
+      detail: [r.population ? `${perHead(r.total / r.population)} per abitante` : null, `2014–2020: ${eur(r.byPeriod['2014-2020'] ?? 0)}`]
+        .filter(Boolean)
+        .join(' · '),
     })),
+  );
+  const regionMap = $derived<RegionDatum[]>(
+    regions.map((r) => {
+      const perCapita = r.population ? r.total / r.population : null;
+      return {
+        id: r.id,
+        name: r.name || r.id,
+        country: code,
+        value: perCapita,
+        tip: [
+          ['Pagamenti UE', eur(r.total)],
+          ['Per abitante', perCapita === null ? 'n.d.' : perHead(perCapita)],
+        ],
+      };
+    }),
   );
 
   const neighbours = [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name, 'it'));
@@ -175,11 +193,16 @@
     <ChartFrame
       kicker="Le regioni · totale {historic.firstYear}–{historic.lastYear}"
       title="{regionItems[0].label} è la regione che ha ricevuto di più"
-      note="Pagamenti UE cumulati per regione (NUTS 2), stimati dalla Commissione a partire dai programmi. Importi assoluti: le regioni più popolose partono avvantaggiate."
+      note="Pagamenti UE cumulati per regione (NUTS 2, confini del 2010), stimati dalla Commissione a partire dai programmi. La mappa è in euro per abitante, la classifica in importi assoluti."
       source={historicSource}
       table={{ columns: ['Regione', 'Totale (€)'], rows: regions.map((r) => [r.name || r.id, r.total]) }}
       filename="{code}-regioni"
     >
+      {#if regions.length > 1}
+        <div class="region-map">
+          <RegionMap regions={regionMap} focus={code} legendLabel="€ per abitante, intera serie" format={perHead} />
+        </div>
+      {/if}
       <RankBars items={regionItems} format={eur} valueLabel="Totale" numbered />
     </ChartFrame>
   </section>
@@ -208,6 +231,10 @@
   }
   .narrow {
     max-width: 820px;
+  }
+  .region-map {
+    max-width: 560px;
+    margin-bottom: 20px;
   }
   .others {
     margin-top: 56px;

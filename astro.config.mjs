@@ -12,6 +12,6 @@ export default defineConfig({
     plugins: [tailwindcss()],
     // Le librerie dei grafici sono importate solo dentro le isole Svelte: senza questa lista
     // il server di sviluppo le scopre pagina per pagina e le isole già caricate smettono di idratarsi.
-    optimizeDeps: { include: ['d3', 'd3-sankey'] },
+    optimizeDeps: { include: ['d3', 'd3-sankey', 'topojson-client'] },
   },
 });

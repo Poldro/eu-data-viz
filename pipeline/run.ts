@@ -15,6 +15,7 @@ import { buildCube1420, buildCube2127, cubePlannedTotal, QUERY_1420, QUERY_2127,
 import { eurostatUrl, fetchEurostat } from './eurostat';
 import { aggregateFts, FtsRow } from './fts';
 import { buildHistoric, QUERY_REGIONAL, QUERY_YEARLY, RawRegional, RawYearly } from './historic';
+import { fetchGeometry, GEOMETRY_PAGE, POPULATION_DATASET, POPULATION_YEAR, populationByCode, prepareGeometry } from './regions';
 import { buildRrf, DATASET_RECEIVED, DATASET_USES } from './rrf';
 import { datasetUrl, soql } from './socrata';
 import type { Meta } from '../src/lib/meta';
@@ -26,6 +27,8 @@ const CACHE_DIR = path.join(ROOT, '.cache/fts');
 const DATASET_2127 = '3git-md5z';
 const DATASET_1420 = '99js-gm52';
 const DATASET_HISTORIC = 'tc55-7ysv';
+/** Quota minima del valore storico che deve avere sia una geometria sia una popolazione. */
+const MIN_REGION_COVERAGE = 0.93;
 const FTS_YEAR = 2025;
 const FTS_URL = `https://ec.europa.eu/budget/financial-transparency-system/download/${FTS_YEAR}_FTS_dataset_en.xlsx`;
 const FTS_PAGE = 'https://ec.europa.eu/budget/financial-transparency-system/';
@@ -81,16 +84,34 @@ async function cohesion(): Promise<Meta['sources']> {
 }
 
 async function historic(): Promise<Meta['sources']> {
-  const [yearly, regional] = await Promise.all([
+  const [yearly, regional, rawGeometry, population] = await Promise.all([
     soql(DATASET_HISTORIC, QUERY_YEARLY),
     soql(DATASET_HISTORIC, QUERY_REGIONAL),
+    fetchGeometry(),
+    fetchEurostat(POPULATION_DATASET, { sex: 'T', age: 'TOTAL', time: POPULATION_YEAR, geoLevel: 'nuts2' }),
   ]);
+  const geometry = prepareGeometry(rawGeometry);
   const data = buildHistoric(
     parseAll(RawYearly, yearly, `${DATASET_HISTORIC} annuale`),
     parseAll(RawRegional, regional, `${DATASET_HISTORIC} regionale`),
+    { names: geometry.names, population: populationByCode(population) },
   );
-  await writeJson('historic.json', data);
+
+  // Una mappa con troppi buchi racconterebbe una storia falsa: sotto soglia ci si ferma.
+  const regions = Object.values(data.regions).flat();
+  const total = regions.reduce((s, r) => s + r.total, 0);
+  const share = (keep: (r: (typeof regions)[number]) => boolean) => regions.filter(keep).reduce((s, r) => s + r.total, 0) / total;
+  const drawn = share((r) => geometry.names.has(r.id));
+  const counted = share((r) => r.population !== null);
+  if (drawn < MIN_REGION_COVERAGE || counted < MIN_REGION_COVERAGE) {
+    throw new Error(`Regioni: copertura insufficiente (geometria ${(drawn * 100).toFixed(1)}%, popolazione ${(counted * 100).toFixed(1)}%)`);
+  }
+  process.stdout.write(`Regioni: geometria ${(drawn * 100).toFixed(1)}% del valore, popolazione ${(counted * 100).toFixed(1)}%\n`);
+
+  await Promise.all([writeJson('historic.json', data), writeJson('nuts2.json', geometry.topology)]);
   return [
+    { id: 'nuts2', name: 'Eurostat GISCO — regioni NUTS 2 (2010)', url: GEOMETRY_PAGE, asOf: '2010' },
+    { id: 'population', name: `Eurostat — popolazione regionale (${POPULATION_DATASET})`, url: eurostatUrl(POPULATION_DATASET), asOf: POPULATION_YEAR },
     { id: 'historic', name: 'Historic EU payments — regionalised and modelled', url: datasetUrl(DATASET_HISTORIC), asOf: String(data.lastYear) },
   ];
 }

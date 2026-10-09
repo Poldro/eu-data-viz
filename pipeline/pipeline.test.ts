@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildCube1420, buildCube2127, cleanCategoryLabel, cubePlannedTotal, Raw1420, Raw2127 } from './cohesion';
 import { aggregateFts, cleanProgramme, FtsRow } from './fts';
 import { buildHistoric, RawRegional, RawYearly } from './historic';
+import { normalizeRegion, populationFor } from './regions';
 
 const row2127 = (over: Record<string, string>) =>
   Raw2127.parse({
@@ -100,11 +101,28 @@ describe('storico dei pagamenti', () => {
   it('ordina le regioni per totale e somma i periodi', () => {
     const h = buildHistoric(yearly, regional);
     expect(h.regions.IT.map((r) => r.id)).toEqual(['ITF3', 'ITC1']);
-    expect(h.regions.IT[0]).toMatchObject({ total: 12, byPeriod: { '2000-2006': 7, '2007-2013': 5 } });
+    expect(h.regions.IT[0]).toMatchObject({ total: 12, byPeriod: { '2000-2006': 7, '2007-2013': 5 }, population: null });
   });
 
   it('fallisce se non arrivano dati', () => {
     expect(() => buildHistoric([], [])).toThrow();
+  });
+
+  it('riporta i codici recenti alla regione 2010 e somma gli importi', () => {
+    const rows = [
+      { country: 'HR', nuts2_id: 'HR05', nuts2_name: 'Grad Zagreb', programming_period: '2014-2020', paid: '4' },
+      { country: 'HR', nuts2_id: 'HR06', nuts2_name: 'Sjeverna', programming_period: '2014-2020', paid: '6' },
+      { country: 'GR', nuts2_id: 'GR51', nuts2_name: 'Thraki', programming_period: '2014-2020', paid: '2' },
+    ].map((r) => RawRegional.parse(r));
+    const context = {
+      names: new Map([['HR04', 'Kontinentalna Hrvatska']]),
+      population: new Map([['HR02', 1], ['HR05', 2], ['HR06', 3], ['EL51', 10]]),
+    };
+    const h = buildHistoric(yearly, rows, context);
+    expect(h.regions.HR).toEqual([
+      { id: 'HR04', name: 'Kontinentalna Hrvatska', total: 10, byPeriod: { '2014-2020': 10 }, population: 6 },
+    ]);
+    expect(h.regions.EL[0]).toMatchObject({ id: 'EL11', name: 'Thraki', population: 10 });
   });
 });
 
@@ -168,5 +186,24 @@ describe('beneficiari FTS', () => {
     expect(cleanProgramme('O.0.4 - Ukraine Facility')).toBe('Ukraine Facility');
     expect(cleanProgramme('DA/JU/EUI - Decentralised Agencies')).toBe('DA/JU/EUI - Decentralised Agencies');
     expect(cleanProgramme('')).toBe('N/D');
+  });
+});
+
+describe('regioni', () => {
+  const population = new Map([['ITC1', 4_000_000], ['PL91', 3], ['PL92', 2]]);
+
+  it('lascia invariati i codici già nella versione 2010', () => {
+    expect(normalizeRegion(' itc1 ')).toBe('ITC1');
+    expect(normalizeRegion('SI04')).toBe('SI02');
+  });
+
+  it('somma la popolazione delle regioni nate da una suddivisione', () => {
+    expect(populationFor('ITC1', population)).toBe(4_000_000);
+    expect(populationFor('PL12', population)).toBe(5);
+  });
+
+  it('restituisce null quando manca anche una sola parte', () => {
+    expect(populationFor('HU10', population)).toBeNull();
+    expect(populationFor('IE01', population)).toBeNull();
   });
 });

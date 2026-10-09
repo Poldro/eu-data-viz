@@ -3,7 +3,7 @@ import { areaName, countryByEnglishName, COUNTRIES, normalizeArea, TILE_COLS, TI
 import { toCsv } from './csv';
 import { buildFlows, countryStats, filterRows, groupBy, OTHER_AREA, rankOf, ratio, totals, type CubeRow } from './cube';
 import { eur, lowerFirst, monthIt, ordinal, pct, perHead } from './format';
-import { countrySeries } from './historic';
+import { countrySeries, programmingPeriods, regionValues, type Historic } from './historic';
 
 const rows: CubeRow[] = [
   ['IT', 'ERDF', 'green', 'c1', 100, 60, 20, 50],
@@ -86,6 +86,25 @@ describe('storico e csv', () => {
       { year: 2001, values: { A: 2, B: 0 }, total: 2 },
     ]);
   });
+  it('calcola importi e valori per abitante delle regioni per periodo', () => {
+    const historic: Historic = {
+      firstYear: 2000,
+      lastYear: 2001,
+      funds: [],
+      byCountry: {},
+      regions: {
+        IT: [{ id: 'ITF3', name: 'Campania', total: 30, byPeriod: { '2007-2013': 10, '2014-2020': 20 }, population: 5 }],
+        IE: [{ id: 'IE01', name: 'Border', total: 8, byPeriod: { '2014-2020': 8 }, population: null }],
+      },
+    };
+    expect(programmingPeriods(historic)).toEqual(['2007-2013', '2014-2020']);
+    const period = regionValues(historic, '2014-2020');
+    expect(period.find((r) => r.id === 'ITF3')).toMatchObject({ country: 'IT', amount: 20, perCapita: 4 });
+    expect(period.find((r) => r.id === 'IE01')).toMatchObject({ amount: 8, perCapita: null });
+    expect(regionValues(historic, '')[0]).toMatchObject({ amount: 30, perCapita: 6 });
+    expect(regionValues(historic, '2000-2006')[0].amount).toBe(0);
+  });
+
   it('protegge separatori, virgolette e formule', () => {
     expect(toCsv({ columns: ['a', 'b'], rows: [['x;y', 2], ['say "hi"', -3], ['=SUM(A1)', 1]] })).toBe(
       'a;b\n"x;y";2\n"say ""hi""";-3\n\'=SUM(A1);1',

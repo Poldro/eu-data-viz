@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isMemberState, normalizeArea } from '../src/lib/countries';
 import type { Historic, HistoricRegion } from '../src/lib/historic';
+import { normalizeRegion, populationFor } from './regions';
 
 const amount = z.coerce.number().default(0);
 
@@ -31,7 +32,15 @@ export const QUERY_REGIONAL = {
   group: 'country,nuts2_id,nuts2_name,programming_period',
 };
 
-export function buildHistoric(yearly: readonly RawYearly[], regional: readonly RawRegional[]): Historic {
+export interface RegionContext {
+  /** Nomi ufficiali per codice regione, dalla geometria. */
+  names: ReadonlyMap<string, string>;
+  population: ReadonlyMap<string, number>;
+}
+
+const NO_CONTEXT: RegionContext = { names: new Map(), population: new Map() };
+
+export function buildHistoric(yearly: readonly RawYearly[], regional: readonly RawRegional[], context: RegionContext = NO_CONTEXT): Historic {
   const member = yearly
     .map((r) => ({ ...r, country: normalizeArea(r.country) }))
     .filter((r) => isMemberState(r.country));
@@ -55,8 +64,17 @@ export function buildHistoric(yearly: readonly RawYearly[], regional: readonly R
     const country = normalizeArea(r.country);
     // Le righe "xxZZ" raccolgono i pagamenti non attribuibili a una regione.
     if (!isMemberState(country) || r.paid <= 0) continue;
-    const prev = regionMap.get(r.nuts2_id) ?? { id: r.nuts2_id, name: r.nuts2_name, total: 0, byPeriod: {}, country };
-    regionMap.set(r.nuts2_id, {
+    // Più codici recenti possono confluire nella stessa regione 2010: gli importi si sommano.
+    const id = normalizeRegion(r.nuts2_id);
+    const prev = regionMap.get(id) ?? {
+      id,
+      name: context.names.get(id) ?? r.nuts2_name,
+      total: 0,
+      byPeriod: {},
+      population: populationFor(id, context.population),
+      country,
+    };
+    regionMap.set(id, {
       ...prev,
       total: prev.total + Math.round(r.paid),
       byPeriod: {

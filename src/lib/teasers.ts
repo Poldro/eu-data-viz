@@ -3,10 +3,12 @@
  * così la prima pagina non deve scaricare i loro dati per intero.
  */
 import ftsJson from '../data/fts.json';
+import historicJson from '../data/historic.json';
 import rrfJson from '../data/rrf.json';
 import { HOME_COUNTRY, isMemberState } from './countries';
-import { eur, pct } from './format';
+import { eur, pct, perHead } from './format';
 import type { FtsSummary } from './fts';
+import { regionValues, type Historic } from './historic';
 import { rrfTotals, type Rrf } from './rrf';
 
 export interface Teaser {
@@ -29,6 +31,22 @@ function beneficiaries(): Teaser {
   };
 }
 
+const REGION_PERIOD = '2014-2020';
+const REGION_BARS = 40;
+
+function regions(): Teaser {
+  const ranked = regionValues(historicJson as unknown as Historic, REGION_PERIOD)
+    .filter((r) => r.perCapita !== null && r.amount > 0)
+    .sort((a, b) => (b.perCapita ?? 0) - (a.perCapita ?? 0));
+  const home = ranked.findIndex((r) => r.country === HOME_COUNTRY);
+  return {
+    headline: home >= 0 ? `${ranked[home].name}: ${perHead(ranked[home].perCapita ?? 0)} per abitante, prima in Italia` : 'I pagamenti regione per regione',
+    values: ranked.slice(0, REGION_BARS).map((r) => r.perCapita ?? 0),
+    highlight: home < REGION_BARS ? home : -1,
+    chartLabel: 'Le regioni che ricevono di più per abitante',
+  };
+}
+
 function recovery(): Teaser {
   const rrf = rrfJson as Rrf;
   const ranked = Object.entries(rrf.countries)
@@ -44,5 +62,5 @@ function recovery(): Teaser {
 }
 
 export function staticTeasers(): Record<string, Teaser> {
-  return { beneficiari: beneficiaries(), pnrr: recovery() };
+  return { regioni: regions(), beneficiari: beneficiaries(), pnrr: recovery() };
 }
