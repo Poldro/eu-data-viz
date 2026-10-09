@@ -42,6 +42,8 @@
   --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 
   --gutter: clamp(16px, 4vw, 40px);
+  /* Altezza della barra delle sezioni: la barra dei filtri si aggancia subito sotto. */
+  --nav-height: 46px;
   --measure: 62ch;
 }
 

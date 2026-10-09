@@ -5,12 +5,22 @@
   import { filters, filtersQuery, toggleArea, toggleFund } from '../../lib/filters.svelte';
   import { eur, monthIt, ordinal, pct, perHead } from '../../lib/format';
   import { fundLong, fundShort, objectiveLabel } from '../../lib/labels';
+  import { SECTIONS, type Section } from '../../lib/sections';
+  import type { Teaser } from '../../lib/teasers';
   import ChartFrame from '../ChartFrame.svelte';
   import FilterBar from '../FilterBar.svelte';
   import Kpis, { type Kpi } from '../Kpis.svelte';
+  import SectionCard from '../SectionCard.svelte';
   import Tooltip from '../Tooltip.svelte';
+  import MiniBars from '../charts/mini/MiniBars.svelte';
   import Sankey from '../charts/Sankey.svelte';
   import TileMap from '../charts/TileMap.svelte';
+
+  /** Anticipazioni calcolate a build time per le sezioni che non seguono i filtri. */
+  const { teasers }: { teasers: Record<string, Teaser> } = $props();
+
+  const MINI_OBJECTIVES = 8;
+  const NO_CARD = new Set(['panoramica', 'metodo']);
 
   const cube = $derived(cubeFor(filters.period));
   const source = $derived(cubeSource(filters.period));
@@ -78,6 +88,40 @@
       ? `${ranked[0].name}: ${perHead(ranked[0].perCapita)} per abitante${focusStat.code === ranked[0].code ? ', più di chiunque altro' : `. ${focusStat.name}: ${perHead(focusStat.perCapita)}`}`
       : 'Nessun importo con questi filtri',
   );
+  const bySpeed = $derived([...stats].filter((s) => s.planned > 0).sort((a, b) => b.absorption - a.absorption));
+  const byAmount = $derived([...stats].filter((s) => s.planned > 0).sort((a, b) => b.planned - a.planned));
+
+  /** Le anticipazioni delle sezioni che reagiscono ai filtri, calcolate sugli stessi dati dei grafici. */
+  const liveTeasers = $derived<Record<string, Teaser>>({
+    temi: {
+      headline: objectives.length > 0 ? `${objectiveLabel(cube, objectives[0].key)}: ${pct(ratio(objectives[0].planned, sum.planned))} delle risorse` : 'Nessun importo',
+      values: objectives.slice(0, MINI_OBJECTIVES).map((o) => o.planned),
+      highlight: -1,
+      chartLabel: 'Importo pianificato per obiettivo',
+    },
+    assorbimento: {
+      headline: focusStat ? `${focusStat.name}: speso il ${pct(focusStat.absorption)}, ${ordinal(rankOf(stats, focus, 'absorption'))} posto su ${bySpeed.length}` : 'Nessun importo',
+      values: bySpeed.map((s) => s.absorption),
+      highlight: bySpeed.findIndex((s) => s.code === focus),
+      chartLabel: 'Quota spesa per paese, dal più veloce al più lento',
+    },
+    paesi: {
+      headline: byAmount.length > 0 ? `${byAmount[0].name} riceve più di tutti: ${eur(byAmount[0].planned)}` : 'Nessun importo',
+      values: byAmount.map((s) => s.planned),
+      highlight: byAmount.findIndex((s) => s.code === focus),
+      chartLabel: 'Importo pianificato per paese',
+    },
+  });
+  const cards = $derived(
+    SECTIONS.filter((s) => !NO_CARD.has(s.id))
+      .map((section): { section: Section; teaser: Teaser | undefined; live: boolean } => ({
+        section,
+        teaser: liveTeasers[section.id] ?? teasers[section.id],
+        live: section.id in liveTeasers,
+      }))
+      .filter((c): c is { section: Section; teaser: Teaser; live: boolean } => c.teaser !== undefined),
+  );
+
   const mapTable = $derived({
     columns: ['Paese', '€ per abitante', 'Pianificato (€)', 'Speso (€)', 'Speso (%)'],
     rows: ranked.map((s) => [s.name, Math.round(s.perCapita), s.planned, s.spent, Math.round(s.absorption * 1000) / 10]),
@@ -105,6 +149,17 @@
 <FilterBar />
 
 <Kpis items={kpis} />
+
+<section class="index" aria-labelledby="index-title">
+  <h2 id="index-title" class="kicker">In questo numero</h2>
+  <div class="cards">
+    {#each cards as card (card.section.id)}
+      <SectionCard section={card.section} headline={card.teaser.headline} query={card.live ? filtersQuery() : ''}>
+        <MiniBars values={card.teaser.values} highlight={card.teaser.highlight} label={card.teaser.chartLabel} />
+      </SectionCard>
+    {/each}
+  </div>
+</section>
 
 <section class="block">
   <ChartFrame
@@ -177,6 +232,15 @@
   h1 em {
     font-style: italic;
     color: var(--accent);
+  }
+  .index {
+    margin-top: 28px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-top: 10px;
   }
   .block {
     margin-top: 44px;

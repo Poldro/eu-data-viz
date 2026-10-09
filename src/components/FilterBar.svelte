@@ -73,7 +73,8 @@
 <style>
   .bar {
     position: sticky;
-    top: 0;
+    /* sotto la barra delle sezioni, anch'essa fissa */
+    top: var(--nav-height);
     z-index: 20;
     display: flex;
     flex-wrap: wrap;

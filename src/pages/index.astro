@@ -1,11 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import Overview from '../components/pages/Overview.svelte';
+import { staticTeasers } from '../lib/teasers';
 ---
 
 <Base
   title="Dove vanno i fondi europei"
   description="Dashboard interattiva sui fondi europei: da quale fondo partono, che cosa finanziano, in quali paesi arrivano e quanti ne sono stati spesi."
 >
-  <Overview client:load />
+  <Overview teasers={staticTeasers()} client:load />
 </Base>
