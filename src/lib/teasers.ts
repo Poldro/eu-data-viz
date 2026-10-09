@@ -3,9 +3,11 @@
  * così la prima pagina non deve scaricare i loro dati per intero.
  */
 import ftsJson from '../data/fts.json';
+import rrfJson from '../data/rrf.json';
 import { HOME_COUNTRY, isMemberState } from './countries';
-import { eur } from './format';
+import { eur, pct } from './format';
 import type { FtsSummary } from './fts';
+import { rrfTotals, type Rrf } from './rrf';
 
 export interface Teaser {
   headline: string;
@@ -27,6 +29,20 @@ function beneficiaries(): Teaser {
   };
 }
 
+function recovery(): Teaser {
+  const rrf = rrfJson as Rrf;
+  const ranked = Object.entries(rrf.countries)
+    .map(([code, country]) => ({ code, ...rrfTotals(country) }))
+    .sort((a, b) => b.spentShare - a.spentShare);
+  const home = ranked.find((c) => c.code === HOME_COUNTRY);
+  return {
+    headline: home ? `Italia: ricevuto il ${pct(home.receivedShare)} del piano, speso il ${pct(home.spentShare)}` : `Dati al ${rrf.lastYear}`,
+    values: ranked.map((c) => c.spentShare),
+    highlight: ranked.findIndex((c) => c.code === HOME_COUNTRY),
+    chartLabel: 'Quota del piano già spesa, per paese',
+  };
+}
+
 export function staticTeasers(): Record<string, Teaser> {
-  return { beneficiari: beneficiaries() };
+  return { beneficiari: beneficiaries(), pnrr: recovery() };
 }

@@ -17,9 +17,12 @@
     /** Quota spesa media, tracciata come riferimento verticale. */
     average: number;
     averageLabel: string;
+    /** Nomi delle tre grandezze: cambiano tra coesione (assegnato) e PNRR (ricevuto). */
+    labels?: { planned: string; decided: string; spent: string };
   }
 
-  const { rows, average, averageLabel }: Props = $props();
+  const DEFAULT_LABELS = { planned: 'Pianificato', decided: 'Assegnato a progetti', spent: 'Speso' };
+  const { rows, average, averageLabel, labels = DEFAULT_LABELS }: Props = $props();
   const share = (part: number, whole: number) => (whole > 0 ? Math.min(part / whole, 1) : 0);
   const TICKS = [0, 0.25, 0.5, 0.75, 1];
 </script>
@@ -29,9 +32,9 @@
 {:else}
   <div class="chart">
     <div class="legend">
-      <span><i class="swatch spent"></i>Speso</span>
-      <span><i class="swatch decided"></i>Assegnato a progetti</span>
-      <span><i class="swatch planned"></i>Pianificato (100%)</span>
+      <span><i class="swatch spent"></i>{labels.spent}</span>
+      <span><i class="swatch decided"></i>{labels.decided}</span>
+      <span><i class="swatch planned"></i>{labels.planned} (100%)</span>
       <span><i class="swatch avg"></i>{averageLabel}: {pct(average)}</span>
     </div>
 
@@ -50,9 +53,9 @@
           class:accent={row.accent}
           onmousemove={(e) =>
             showTip(e, row.label, [
-              ['Pianificato', eur(row.planned)],
-              ['Assegnato', `${eur(row.decided)} (${pct(share(row.decided, row.planned))})`],
-              ['Speso', `${eur(row.spent)} (${pct(share(row.spent, row.planned))})`],
+              [labels.planned, eur(row.planned)],
+              [labels.decided, `${eur(row.decided)} (${pct(share(row.decided, row.planned))})`],
+              [labels.spent, `${eur(row.spent)} (${pct(share(row.spent, row.planned))})`],
             ])}
           onmouseleave={hideTip}
         >

@@ -44,7 +44,9 @@
       .y0((d) => y(d[0]))
       .y1((d) => y(d[1])),
   );
-  const yearTicks = $derived(points.filter((p) => p.year % (width < 640 ? 10 : 5) === 0).map((p) => p.year));
+  // Le serie brevi (PNRR: sei anni) mostrano ogni anno; quelle lunghe uno ogni cinque o dieci.
+  const tickStep = $derived(points.length <= 10 ? 1 : width < 640 ? 10 : 5);
+  const yearTicks = $derived(points.filter((p) => p.year % tickStep === 0).map((p) => p.year));
 
   let active = $state<YearPoint | null>(null);
 

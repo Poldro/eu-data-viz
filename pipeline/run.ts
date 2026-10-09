@@ -12,8 +12,10 @@ import { fileURLToPath } from 'node:url';
 import type { z } from 'zod';
 import xlsx from 'xlsx';
 import { buildCube1420, buildCube2127, cubePlannedTotal, QUERY_1420, QUERY_2127, Raw1420, Raw2127 } from './cohesion';
+import { eurostatUrl, fetchEurostat } from './eurostat';
 import { aggregateFts, FtsRow } from './fts';
 import { buildHistoric, QUERY_REGIONAL, QUERY_YEARLY, RawRegional, RawYearly } from './historic';
+import { buildRrf, DATASET_RECEIVED, DATASET_USES } from './rrf';
 import { datasetUrl, soql } from './socrata';
 import type { Meta } from '../src/lib/meta';
 
@@ -93,6 +95,16 @@ async function historic(): Promise<Meta['sources']> {
   ];
 }
 
+async function rrf(): Promise<Meta['sources']> {
+  const [received, uses] = await Promise.all([fetchEurostat(DATASET_RECEIVED), fetchEurostat(DATASET_USES)]);
+  const data = buildRrf(received, uses);
+  await writeJson('rrf.json', data);
+  return [
+    { id: 'rrf-received', name: 'Eurostat — RRF financial flows (gov_rrf_fa)', url: eurostatUrl(DATASET_RECEIVED), asOf: String(data.lastYear) },
+    { id: 'rrf-uses', name: 'Eurostat — RRF uses (gov_rrf_use)', url: eurostatUrl(DATASET_USES), asOf: String(data.lastYear) },
+  ];
+}
+
 async function fts(): Promise<Meta['sources']> {
   const file = path.join(CACHE_DIR, `${FTS_YEAR}.xlsx`);
   if (!existsSync(file)) {
@@ -112,7 +124,7 @@ async function fts(): Promise<Meta['sources']> {
 async function main(): Promise<void> {
   const skipFts = process.argv.includes('--skip-fts');
   await mkdir(OUT_DIR, { recursive: true });
-  const steps = [cohesion(), historic(), ...(skipFts ? [] : [fts()])];
+  const steps = [cohesion(), historic(), rrf(), ...(skipFts ? [] : [fts()])];
   const sources = (await Promise.all(steps)).flat();
   // Con --skip-fts il file esistente resta valido: se ne conserva la voce nei metadati.
   const metaPath = path.join(OUT_DIR, 'meta.json');
