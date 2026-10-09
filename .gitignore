@@ -25,3 +25,8 @@ pnpm-debug.log*
 
 # dati grezzi scaricati dalla pipeline
 .cache/
+
+# test end-to-end
+test-results/
+playwright-report/
+coverage/

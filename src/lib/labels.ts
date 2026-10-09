@@ -1,4 +1,5 @@
 import type { Cube } from './cube';
+import { translateCategory } from './labels-categories';
 
 /** Sigle italiane dei fondi (FESR, FSE+…) con il nome esteso. */
 const FUNDS: Readonly<Record<string, [short: string, long: string]>> = {
@@ -95,9 +96,11 @@ export function objectiveLabel(cube: Cube, key: string): string {
   return OBJECTIVES[key] ?? cube.objectives[key] ?? key;
 }
 
-/** Le voci di dettaglio restano nella dicitura ufficiale inglese della Commissione. */
+/** Voce di dettaglio in italiano; se manca la traduzione resta la dicitura inglese della Commissione. */
 export function categoryLabel(cube: Cube, key: string): string {
-  return cube.categories[key] ?? key;
+  const sourceLabel = cube.categories[key];
+  if (sourceLabel === undefined) return key;
+  return translateCategory(key, sourceLabel) ?? sourceLabel;
 }
 
 export function ftsTypeLabel(type: string): string {

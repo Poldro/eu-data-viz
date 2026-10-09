@@ -17,6 +17,8 @@ const current = sectionForPath(Astro.url.pathname);
 // La testata grande è la copertina: nelle pagine interne lascia spazio ai contenuti.
 const isFront = current?.id === 'panoramica';
 const updated = dateIt(meta.generatedAt);
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = `${title} — ${SITE_NAME}`;
 ---
 
 <!doctype html>
@@ -27,7 +29,15 @@ const updated = dateIt(meta.generatedAt);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <title>{title} — {SITE_NAME}</title>
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <title>{fullTitle}</title>
   </head>
   <body>
     <a class="skip" href="#contenuto">Vai al contenuto</a>

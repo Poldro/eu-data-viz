@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import cube2127 from '../data/cube-2127.json';
+import { categoryLabel } from './labels';
+import { translateCategory } from './labels-categories';
+import type { Cube } from './cube';
 import { areaName, countryByEnglishName, COUNTRIES, normalizeArea, TILE_COLS, TILE_ROWS } from './countries';
 import { toCsv } from './csv';
 import { buildFlows, countryStats, filterRows, groupBy, OTHER_AREA, rankOf, ratio, totals, type CubeRow } from './cube';
 import { eur, lowerFirst, monthIt, ordinal, pct, perHead } from './format';
+import { matchesQuery, searchKey } from './search';
 import { countrySeries, programmingPeriods, regionValues, type Historic } from './historic';
 
 const rows: CubeRow[] = [
@@ -109,5 +114,42 @@ describe('storico e csv', () => {
     expect(toCsv({ columns: ['a', 'b'], rows: [['x;y', 2], ['say "hi"', -3], ['=SUM(A1)', 1]] })).toBe(
       'a;b\n"x;y";2\n"say ""hi""";-3\n\'=SUM(A1);1',
     );
+  });
+});
+
+describe('voci di dettaglio in italiano', () => {
+  const cube = cube2127 as unknown as Cube;
+
+  it('traduce i campi d’intervento e le voci degli altri fondi', () => {
+    expect(translateCategory('IF065', 'Waste water collection and treatment')).toBe('Fognature e depurazione');
+    expect(translateCategory('AMIF:SO1.001 Reception conditions', 'Reception conditions')).toBe('Condizioni di accoglienza');
+    expect(translateCategory('ISF:TA', 'TA.36(5).004 Capacity building')).toBe('Assistenza tecnica: rafforzamento delle capacità');
+    expect(translateCategory('IF000', 'Unknown')).toBeUndefined();
+  });
+
+  it('ripiega sulla dicitura della fonte quando manca la traduzione', () => {
+    const tiny: Cube = { period: '', asOf: '', objectives: {}, categories: { IF000: 'New field' }, rows: [] };
+    expect(categoryLabel(tiny, 'IF000')).toBe('New field');
+    expect(categoryLabel(tiny, 'missing')).toBe('missing');
+  });
+
+  // Se la Commissione aggiunge voci, questo test le elenca: vanno tradotte in labels-categories.ts.
+  it('copre tutte le voci presenti nei dati', () => {
+    const missing = Object.entries(cube.categories).filter(([key, label]) => translateCategory(key, label) === undefined);
+    expect(missing).toEqual([]);
+  });
+});
+
+describe('ricerca', () => {
+  it('ignora maiuscole e accenti', () => {
+    expect(searchKey(' Università ')).toBe('UNIVERSITA');
+    expect(matchesQuery('UNIVERSITA DEGLI STUDI DI BOLOGNA', 'università')).toBe(true);
+    expect(matchesQuery('Università di Pisa', 'UNIVERSITA')).toBe(true);
+    expect(matchesQuery('Comune di Roma', 'università')).toBe(false);
+  });
+
+  it('non filtra con meno di due caratteri', () => {
+    expect(matchesQuery('Comune di Roma', '')).toBe(true);
+    expect(matchesQuery('Comune di Roma', 'x')).toBe(true);
   });
 });

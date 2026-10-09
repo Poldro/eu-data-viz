@@ -57,8 +57,8 @@ import { dateIt } from '../lib/format';
       per migrazione e frontiere. Per il 2014–2020 è compreso anche lo sviluppo rurale.
     </p>
     <p>
-      <strong>Non sono compresi</strong> il PNRR e il dispositivo per la ripresa e la resilienza, i pagamenti diretti della
-      politica agricola comune e, per il 2021–2027, lo sviluppo rurale. Sono capitoli con archivi separati, non ancora integrati.
+      <strong>Non sono compresi</strong> i pagamenti diretti della politica agricola comune e, per il 2021–2027, lo sviluppo
+      rurale. Il PNRR ha una sezione a parte, con una fonte e una logica diverse (vedi sotto).
     </p>
 
     <h2>Le scelte di elaborazione</h2>
@@ -81,12 +81,68 @@ import { dateIt } from '../lib/format';
         totali europei, non nelle classifiche nazionali.
       </li>
       <li>
-        Le voci di dettaglio (“campi d’intervento”) sono riportate nella dicitura ufficiale inglese; i nomi degli obiettivi sono
-        stati resi in italiano corrente e non sono le denominazioni giuridiche.
+        I nomi degli obiettivi e delle voci di dettaglio (“campi d’intervento”) sono resi in italiano corrente: non sono le
+        denominazioni giuridiche dei regolamenti. Le voci nuove che la Commissione dovesse aggiungere compaiono in inglese finché
+        non vengono tradotte.
       </li>
       <li>
         La <strong>serie storica</strong> e i totali regionali usano i pagamenti annuali effettivi, a prezzi correnti, e si
         fermano al 2022. L’attribuzione alle regioni è una stima della Commissione.
+      </li>
+    </ul>
+
+    <h2>Le regioni</h2>
+    <p>
+      La mappa usa i pagamenti annuali dell’Unione che la Commissione ha attribuito alle regioni (livello NUTS 2) con una stima a
+      partire dai programmi. La fonte usa quasi ovunque i confini regionali del 2010: i pochi codici più recenti sono stati
+      ricondotti a quella versione, sommando gli importi quando una regione è stata poi divisa.
+    </p>
+    <ul>
+      <li>
+        Gli <strong>euro per abitante</strong> dividono i pagamenti del periodo per la popolazione del 2023. Dove i confini sono
+        cambiati, la popolazione è quella delle regioni attuali corrispondenti; per l’Irlanda la corrispondenza non è
+        ricostruibile e il dato per abitante manca.
+      </li>
+      <li>
+        Le regioni d’oltremare e le isole atlantiche (Azzorre, Madera, Canarie) sono in classifica ma non sulla mappa.
+      </li>
+      <li>La serie regionale si ferma al 2022 e non comprende ancora il ciclo 2021–2027.</li>
+    </ul>
+
+    <h2>I progetti</h2>
+    <p>
+      La sezione Progetti riguarda <strong>solo l’Italia</strong> e usa OpenCoesione, il portale del governo sulle politiche di
+      coesione. Conta il <em>finanziamento pubblico</em> complessivo dei progetti: fondi europei, cofinanziamento nazionale e
+      risorse nazionali per la coesione (come il Fondo sviluppo e coesione). Per questo i totali sono più alti di quelli delle
+      altre sezioni, che considerano la sola quota dell’Unione.
+    </p>
+    <ul>
+      <li>
+        L’elenco ricercabile contiene i 250 progetti più costosi d’Italia e i 30 più costosi di ogni regione del ciclo
+        2021–2027, non tutti i progetti. Per il 2014–2020 la fonte non restituisce la classifica per costo: sono disponibili
+        solo i totali.
+      </li>
+      <li>Un progetto che interessa più regioni è contato in ciascuna: la somma delle regioni supera il totale nazionale.</li>
+      <li>“Pagato” indica i pagamenti registrati nel sistema di monitoraggio, che arrivano con ritardo rispetto ai lavori.</li>
+    </ul>
+
+    <h2>Il PNRR</h2>
+    <p>
+      I dati sul dispositivo per la ripresa e la resilienza vengono da Eurostat, che registra nei conti pubblici di ogni paese
+      quanto è stato <em>ricevuto</em> dalla Commissione e quanto è stato <em>speso</em>, distinguendo sovvenzioni e prestiti.
+    </p>
+    <ul>
+      <li>
+        La <strong>dotazione</strong> di ciascun piano non è pubblicata direttamente: è ricavata dal rapporto tra i fondi
+        ricevuti e la loro quota percentuale dell’allocazione, e può scostarsi di qualche decimale dai documenti ufficiali.
+      </li>
+      <li>
+        Un paese può aver speso più di quanto ha ricevuto: significa che ha anticipato con risorse proprie in attesa dei
+        versamenti europei.
+      </li>
+      <li>
+        La fonte dice quanto e quando, <strong>non per che cosa</strong>: la ripartizione per missioni e singoli interventi non è
+        compresa.
       </li>
     </ul>
 

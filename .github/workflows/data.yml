@@ -1,0 +1,46 @@
+name: Aggiorna i dati
+
+on:
+  schedule:
+    # Ogni lunedì alle 05:00 UTC: le fonti di coesione cambiano poche volte l'anno, una volta a settimana basta.
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Se una fonte non risponde o i totali sono implausibili la pipeline esce con errore:
+      # il job fallisce e il sito in linea resta quello di prima.
+      - run: pnpm data
+      - run: pnpm test
+      - run: pnpm build
+      - name: Salva i dati aggiornati
+        run: |
+          # meta.json cambia a ogni esecuzione (contiene l'ora): si fa il commit solo se cambiano i dati veri.
+          if git diff --quiet -- src/data ':(exclude)src/data/meta.json'; then
+            echo "Nessuna novità nei dati."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data
+          git commit -m "chore: aggiornamento dati $(date -u +%Y-%m-%d)"
+          git push

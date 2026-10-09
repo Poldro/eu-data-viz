@@ -102,7 +102,7 @@
     kicker={selected ? `Dettaglio · ${objectiveLabel(cube, selected)}` : hasCategories ? 'Le quindici voci più finanziate' : 'I fondi che finanziano queste voci'}
     title={listTitle}
     note={hasCategories
-      ? 'Le voci di dettaglio sono i “campi d’intervento” del regolamento europeo, riportati nella dicitura ufficiale inglese.'
+      ? 'Le voci di dettaglio sono i “campi d’intervento” del regolamento europeo, resi in italiano corrente.'
       : 'Per il ciclo 2014–2020 la fonte non scende sotto il livello dell’obiettivo tematico: il dettaglio mostra i fondi.'}
     {source}
     table={{ columns: ['Voce', 'Pianificato (€)'], rows: items.map((i) => [i.label, i.value]) }}

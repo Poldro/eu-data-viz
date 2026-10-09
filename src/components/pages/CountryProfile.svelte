@@ -163,7 +163,7 @@
     <ChartFrame
       kicker="Le dieci voci più finanziate"
       title="La singola voce più grande vale {eur(categories[0].value)}"
-      note="Campi d’intervento del regolamento europeo, nella dicitura ufficiale inglese."
+      note="Campi d’intervento del regolamento europeo, resi in italiano corrente."
       {source}
       table={{ columns: ['Voce', 'Pianificato (€)'], rows: categories.map((i) => [i.label, i.value]) }}
       filename="{code}-voci-{filters.period}"
