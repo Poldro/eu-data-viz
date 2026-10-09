@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Leakage from '../components/pages/Leakage.svelte';
+---
+
+<Base
+  title="Quanto si perde per strada"
+  description="Su cento euro di fondi europei, quanti finanziano progetti, quanti pagano la gestione, quanti restano non spesi e quanti sono contestati dai revisori."
+>
+  <Leakage client:load />
+</Base>

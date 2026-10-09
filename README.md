@@ -3,7 +3,7 @@
 Dashboard di data journalism sui fondi europei: da quale fondo partono, che cosa finanziano,
 in quali paesi e regioni arrivano, quanti ne sono stati spesi e chi li incassa.
 
-Nove sezioni: Panoramica, Cosa finanziano, Chi spende, Paesi, Regioni, Progetti (Italia),
+Dieci sezioni: Panoramica, Cosa finanziano, Chi spende, Cosa si perde, Paesi, Regioni, Progetti (Italia),
 PNRR, Beneficiari, Metodo. L'elenco vive in `src/lib/sections.ts` e alimenta testata,
 indice in prima pagina e rimandi a fine pagina.
 
@@ -42,6 +42,9 @@ aggregati da una pipeline e salvati in `src/data/`.
 | `rrf` | Eurostat `gov_rrf_fa` e `gov_rrf_use` | `rrf.json` |
 | `fts` | Financial Transparency System | `fts.json` |
 | `projects` | API OpenCoesione (solo Italia) | `projects.json` |
+
+I tassi di errore della Corte dei conti europea (`src/lib/audit.ts`) escono una volta l'anno in PDF
+e vanno aggiornati a mano.
 
 Il passo `projects` è lento (una decina di minuti): l'API limita le richieste e impone pause
 di 30 secondi. Per il ciclo 2014-2020 non restituisce la classifica per costo, quindi di quel

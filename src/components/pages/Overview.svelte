@@ -5,6 +5,7 @@
   import { filters, filtersQuery, toggleArea, toggleFund } from '../../lib/filters.svelte';
   import { eur, monthIt, ordinal, pct, perHead } from '../../lib/format';
   import { fundLong, fundShort, objectiveLabel } from '../../lib/labels';
+  import { countryLeakage } from '../../lib/leakage';
   import { SECTIONS, type Section } from '../../lib/sections';
   import type { Teaser } from '../../lib/teasers';
   import ChartFrame from '../ChartFrame.svelte';
@@ -91,6 +92,9 @@
   const bySpeed = $derived([...stats].filter((s) => s.planned > 0).sort((a, b) => b.absorption - a.absorption));
   const byAmount = $derived([...stats].filter((s) => s.planned > 0).sort((a, b) => b.planned - a.planned));
 
+  const losses = $derived(countryLeakage(filterRows(cube.rows, { fund: filters.fund })).sort((a, b) => b.managementShare - a.managementShare));
+  const focusLoss = $derived(losses.find((c) => c.code === focus));
+
   /** Le anticipazioni delle sezioni che reagiscono ai filtri, calcolate sugli stessi dati dei grafici. */
   const liveTeasers = $derived<Record<string, Teaser>>({
     temi: {
@@ -104,6 +108,12 @@
       values: bySpeed.map((s) => s.absorption),
       highlight: bySpeed.findIndex((s) => s.code === focus),
       chartLabel: 'Quota spesa per paese, dal più veloce al più lento',
+    },
+    dispersione: {
+      headline: focusLoss ? `${focusLoss.name}: il ${pct(focusLoss.managementShare, 1)} dei fondi paga la gestione, ${ordinal(losses.indexOf(focusLoss) + 1)} quota su ${losses.length}` : 'Nessun importo',
+      values: losses.map((c) => c.managementShare),
+      highlight: losses.findIndex((c) => c.code === focus),
+      chartLabel: 'Quota riservata alla gestione, per paese',
     },
     paesi: {
       headline: byAmount.length > 0 ? `${byAmount[0].name} riceve più di tutti: ${eur(byAmount[0].planned)}` : 'Nessun importo',

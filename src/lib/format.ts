@@ -26,6 +26,11 @@ export function int(value: number): string {
   return INT.format(value);
 }
 
+/** Numero con un decimale: "3,6". */
+export function decimal(value: number): string {
+  return ONE.format(value);
+}
+
 /** Euro per abitante, arrotondati all'unità. */
 export function perHead(value: number): string {
   return `${INT.format(value)} €`;

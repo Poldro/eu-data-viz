@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const SECTIONS = ['/', '/temi/', '/assorbimento/', '/paesi/', '/paesi/it/', '/regioni/', '/progetti/', '/pnrr/', '/beneficiari/', '/metodo/'];
+const SECTIONS = ['/', '/temi/', '/assorbimento/', '/dispersione/', '/paesi/', '/paesi/it/', '/regioni/', '/progetti/', '/pnrr/', '/beneficiari/', '/metodo/'];
 
 /** Raccoglie gli errori di pagina e di console: un'isola che non si idrata finisce qui. */
 function trackErrors(page: Page): string[] {
@@ -48,7 +48,7 @@ test('la prima pagina presenta le sezioni e porta a ciascuna', async ({ page }) 
   await page.goto('/');
   await hydrated(page);
   const cards = page.locator('.cards a');
-  await expect(cards).toHaveCount(7);
+  await expect(cards).toHaveCount(8);
   await cards.filter({ hasText: 'PNRR' }).click();
   await expect(page).toHaveURL(/\/pnrr\/$/);
   await expect(page.locator('h1')).toContainText('Italia');
@@ -113,4 +113,17 @@ test('a fine pagina c’è il rimando alla sezione successiva', async ({ page })
   await page.goto('/temi/');
   await page.locator('nav.pager a.next').click();
   await expect(page).toHaveURL(/\/assorbimento\/$/);
+});
+
+test('la sezione sulle perdite divide cento euro e segue il paese scelto', async ({ page }) => {
+  await page.goto('/dispersione/?paese=PL');
+  await hydrated(page);
+  const frame = page.locator('figure.frame').first();
+  await expect(frame.locator('h2')).toContainText('Polonia');
+  await expect(frame.locator('ol.rows > li')).toHaveCount(4);
+  await frame.getByRole('button', { name: 'Tabella' }).click();
+  for (const row of await frame.locator('table tbody tr').all()) {
+    const cells = (await row.locator('td').allInnerTexts()).slice(-3).map((text) => Number(text.replace(/\./g, '').replace(',', '.')));
+    expect(cells.reduce((a, b) => a + b, 0)).toBeCloseTo(100, 0);
+  }
 });
