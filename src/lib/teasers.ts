@@ -4,11 +4,13 @@
  */
 import ftsJson from '../data/fts.json';
 import historicJson from '../data/historic.json';
+import projectsJson from '../data/projects.json';
 import rrfJson from '../data/rrf.json';
 import { HOME_COUNTRY, isMemberState } from './countries';
-import { eur, pct, perHead } from './format';
+import { eur, int, pct, perHead } from './format';
 import type { FtsSummary } from './fts';
 import { regionValues, type Historic } from './historic';
+import { CYCLES, type Projects } from './projects';
 import { rrfTotals, type Rrf } from './rrf';
 
 export interface Teaser {
@@ -47,6 +49,18 @@ function regions(): Teaser {
   };
 }
 
+function projects(): Teaser {
+  const data = projectsJson as Projects;
+  const cycle = CYCLES[0];
+  const summary = data.cycles[cycle.id];
+  return {
+    headline: `${int(summary.projects)} progetti in Italia nel ${cycle.label}, per ${eur(summary.cost)}`,
+    values: summary.regions.map((r) => r.cost),
+    highlight: -1,
+    chartLabel: 'Finanziamento pubblico per regione italiana',
+  };
+}
+
 function recovery(): Teaser {
   const rrf = rrfJson as Rrf;
   const ranked = Object.entries(rrf.countries)
@@ -62,5 +76,5 @@ function recovery(): Teaser {
 }
 
 export function staticTeasers(): Record<string, Teaser> {
-  return { regioni: regions(), beneficiari: beneficiaries(), pnrr: recovery() };
+  return { regioni: regions(), progetti: projects(), beneficiari: beneficiaries(), pnrr: recovery() };
 }

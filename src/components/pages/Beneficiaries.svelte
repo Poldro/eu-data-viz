@@ -5,6 +5,7 @@
   import { eur, int, pct } from '../../lib/format';
   import type { FtsSummary } from '../../lib/fts';
   import { ftsProgrammeLabel, ftsTypeLabel } from '../../lib/labels';
+  import { matchesQuery } from '../../lib/search';
   import ChartFrame from '../ChartFrame.svelte';
   import Kpis, { type Kpi } from '../Kpis.svelte';
   import PageHead from '../PageHead.svelte';
@@ -15,7 +16,6 @@
   const source = sourceById('fts');
   const TOP_PROGRAMMES = 12;
   const PAGE_SIZE = 40;
-  const MIN_QUERY = 2;
 
   const countries = [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name, 'it'));
   const types = [...new Set(fts.top.map((b) => b.type))].sort((a, b) => ftsTypeLabel(a).localeCompare(ftsTypeLabel(b), 'it'));
@@ -26,13 +26,12 @@
   let query = $state('');
   let shown = $state(PAGE_SIZE);
 
-  const needle = $derived(query.trim().toUpperCase());
   const matches = $derived(
     fts.top.filter(
       (b) =>
         (!country || b.country === country) &&
         (!type || b.type === type) &&
-        (needle.length < MIN_QUERY || b.name.toUpperCase().includes(needle)),
+        matchesQuery(b.name, query),
     ),
   );
   const visible = $derived(matches.slice(0, shown));

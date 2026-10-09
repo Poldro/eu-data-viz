@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Projects from '../components/pages/Projects.svelte';
+---
+
+<Base
+  title="I progetti finanziati in Italia"
+  description="I progetti delle politiche di coesione in Italia: quanti sono, quanto costano, a che punto sono e quali sono i più grandi, regione per regione."
+>
+  <Projects client:load />
+</Base>

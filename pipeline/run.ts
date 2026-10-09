@@ -3,7 +3,9 @@
  * Qualsiasi errore interrompe l'esecuzione: il sito non viene mai costruito su dati parziali.
  *
  *   pnpm data             tutte le fonti
- *   pnpm data --skip-fts  solo la politica di coesione (più rapido)
+ *   pnpm data --skip-fts       senza il file dei beneficiari
+ *   pnpm data --skip-projects  senza i progetti OpenCoesione (il passo più lento)
+ *   pnpm data --only=rrf       un solo passo: cohesion, historic, rrf, fts, projects
  */
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -15,6 +17,7 @@ import { buildCube1420, buildCube2127, cubePlannedTotal, QUERY_1420, QUERY_2127,
 import { eurostatUrl, fetchEurostat } from './eurostat';
 import { aggregateFts, FtsRow } from './fts';
 import { buildHistoric, QUERY_REGIONAL, QUERY_YEARLY, RawRegional, RawYearly } from './historic';
+import { fetchProjects, SITE as OPENCOESIONE_SITE } from './opencoesione';
 import { fetchGeometry, GEOMETRY_PAGE, POPULATION_DATASET, POPULATION_YEAR, populationByCode, prepareGeometry } from './regions';
 import { buildRrf, DATASET_RECEIVED, DATASET_USES } from './rrf';
 import { datasetUrl, soql } from './socrata';
@@ -126,6 +129,19 @@ async function rrf(): Promise<Meta['sources']> {
   ];
 }
 
+async function projects(): Promise<Meta['sources']> {
+  const data = await fetchProjects({
+    cycles: ['2021_2027', '2014_2020'],
+    rankedCycles: ['2021_2027'],
+    topNational: 250,
+    topPerRegion: 30,
+    onProgress: (message) => process.stdout.write(`  OpenCoesione: ${message}\n`),
+  });
+  await writeJson('projects.json', data);
+  const asOf = `${data.asOf.slice(0, 4)}-${data.asOf.slice(4, 6)}`;
+  return [{ id: 'projects', name: 'OpenCoesione — progetti delle politiche di coesione', url: OPENCOESIONE_SITE, asOf }];
+}
+
 async function fts(): Promise<Meta['sources']> {
   const file = path.join(CACHE_DIR, `${FTS_YEAR}.xlsx`);
   if (!existsSync(file)) {
@@ -143,9 +159,13 @@ async function fts(): Promise<Meta['sources']> {
 }
 
 async function main(): Promise<void> {
-  const skipFts = process.argv.includes('--skip-fts');
+  // --only=projects esegue un solo passo; --skip-fts e --skip-projects saltano i due più lenti.
+  const only = process.argv.find((arg) => arg.startsWith('--only='))?.slice('--only='.length);
+  const all = { cohesion, historic, rrf, fts, projects };
+  const wanted = Object.entries(all).filter(([name]) => (only ? name === only : !process.argv.includes(`--skip-${name}`)));
+  if (wanted.length === 0) throw new Error(`Nessun passo da eseguire (passi disponibili: ${Object.keys(all).join(', ')})`);
   await mkdir(OUT_DIR, { recursive: true });
-  const steps = [cohesion(), historic(), rrf(), ...(skipFts ? [] : [fts()])];
+  const steps = wanted.map(([, step]) => step());
   const sources = (await Promise.all(steps)).flat();
   // Con --skip-fts il file esistente resta valido: se ne conserva la voce nei metadati.
   const metaPath = path.join(OUT_DIR, 'meta.json');

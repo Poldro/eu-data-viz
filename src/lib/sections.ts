@@ -13,6 +13,7 @@ export const SECTIONS: readonly Section[] = [
   { id: 'assorbimento', href: '/assorbimento/', label: 'Chi spende', blurb: 'La classifica di chi usa i fondi e chi li lascia fermi.' },
   { id: 'paesi', href: '/paesi/', label: 'Paesi', blurb: 'Una scheda per ciascuno dei 27 Stati membri.' },
   { id: 'regioni', href: '/regioni/', label: 'Regioni', blurb: 'La mappa dei pagamenti, regione per regione, dal 1989.' },
+  { id: 'progetti', href: '/progetti/', label: 'Progetti', blurb: 'I cantieri e gli interventi finanziati in Italia, uno per uno.' },
   { id: 'pnrr', href: '/pnrr/', label: 'PNRR', blurb: 'Il piano di ripresa: quanto è arrivato e quanto è stato speso.' },
   { id: 'beneficiari', href: '/beneficiari/', label: 'Beneficiari', blurb: 'Chi incassa i fondi gestiti direttamente da Bruxelles.' },
   { id: 'metodo', href: '/metodo/', label: 'Metodo', blurb: 'Fonti, definizioni e limiti dei numeri.' },
