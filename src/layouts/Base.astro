@@ -13,6 +13,8 @@ interface Props {
 const { title, description } = Astro.props;
 
 const SITE_NAME = 'Conto Europa';
+// Token pubblico di Cloudflare Web Analytics (senza cookie): compare comunque nel sorgente della pagina.
+const CF_BEACON = JSON.stringify({ token: 'd201cd187d744d66b9fa155711d9b945' });
 const current = sectionForPath(Astro.url.pathname);
 // La testata grande è la copertina: nelle pagine interne lascia spazio ai contenuti.
 const isFront = current?.id === 'panoramica';
@@ -38,6 +40,11 @@ const fullTitle = `${title} — ${SITE_NAME}`;
     <meta property="og:url" content={canonical} />
     <meta name="twitter:card" content="summary" />
     <title>{fullTitle}</title>
+    {
+      import.meta.env.PROD && (
+        <script is:inline type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={CF_BEACON} />
+      )
+    }
   </head>
   <body>
     <a class="skip" href="#contenuto">Vai al contenuto</a>
