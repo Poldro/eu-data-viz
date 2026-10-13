@@ -15,6 +15,8 @@ const { title, description } = Astro.props;
 const SITE_NAME = 'Conto Europa';
 // Token pubblico di Cloudflare Web Analytics (senza cookie): compare comunque nel sorgente della pagina.
 const CF_BEACON = JSON.stringify({ token: 'd201cd187d744d66b9fa155711d9b945' });
+// Solo sul sito pubblicato: una build locale (anteprima, test end-to-end) ha localhost come indirizzo e il beacon verrebbe rifiutato.
+const withAnalytics = import.meta.env.PROD && Astro.site?.hostname !== 'localhost';
 const current = sectionForPath(Astro.url.pathname);
 // La testata grande è la copertina: nelle pagine interne lascia spazio ai contenuti.
 const isFront = current?.id === 'panoramica';
@@ -41,7 +43,7 @@ const fullTitle = `${title} — ${SITE_NAME}`;
     <meta name="twitter:card" content="summary" />
     <title>{fullTitle}</title>
     {
-      import.meta.env.PROD && (
+      withAnalytics && (
         <script is:inline type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={CF_BEACON} />
       )
     }
