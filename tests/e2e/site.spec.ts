@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const SECTIONS = ['/', '/temi/', '/assorbimento/', '/dispersione/', '/paesi/', '/paesi/it/', '/regioni/', '/progetti/', '/pnrr/', '/beneficiari/', '/metodo/'];
+const SECTIONS = ['/', '/temi/', '/assorbimento/', '/dispersione/', '/paesi/', '/paesi/it/', '/regioni/', '/progetti/', '/pnrr/', '/beneficiari/', '/lobby/', '/metodo/'];
 
 /** Raccoglie gli errori di pagina e di console: un'isola che non si idrata finisce qui. */
 function trackErrors(page: Page): string[] {
@@ -48,7 +48,7 @@ test('la prima pagina presenta le sezioni e porta a ciascuna', async ({ page }) 
   await page.goto('/');
   await hydrated(page);
   const cards = page.locator('.cards a');
-  await expect(cards).toHaveCount(8);
+  await expect(cards).toHaveCount(9);
   await cards.filter({ hasText: 'PNRR' }).click();
   await expect(page).toHaveURL(/\/pnrr\/$/);
   await expect(page.locator('h1')).toContainText('Italia');
@@ -83,6 +83,25 @@ test('la ricerca dei beneficiari filtra per nome', async ({ page }) => {
   const names = page.locator('ol.list .name');
   await expect(names.first()).toBeVisible();
   for (const name of await names.allInnerTexts()) expect(name.toUpperCase()).toContain('UNIVERSIT');
+});
+
+test('la sezione sulle lobby avverte dei limiti, filtra per atto e rimanda al Registro', async ({ page }) => {
+  await page.goto('/lobby/');
+  await hydrated(page);
+  await expect(page.locator('aside.caveat')).toContainText('autodichiarazioni');
+  await expect(page.locator('aside.caveat a')).toHaveAttribute('href', '/metodo/#lobby');
+
+  const detail = page.locator('figure.frame').filter({ hasText: 'Un atto alla volta' });
+  await detail.getByRole('combobox', { name: 'Atto' }).selectOption('dma');
+  await expect(detail.locator('h2')).toContainText('mercati digitali');
+  await expect(detail.locator('p.act a')).toHaveAttribute('href', /CELEX:32022R1925$/);
+
+  const search = page.locator('figure.frame').filter({ hasText: 'Cerca un’organizzazione' });
+  await search.getByRole('searchbox').fill('eni');
+  await search.getByRole('combobox', { name: 'Paese' }).selectOption('IT');
+  const names = search.locator('ol.list a.name');
+  await expect(names.first()).toHaveAttribute('href', /^https:\/\/transparency-register\.europa\.eu\/.*id=[\d-]+$/);
+  for (const name of await names.allInnerTexts()) expect(name.toUpperCase()).toContain('ENI');
 });
 
 test('la ricerca dei progetti filtra per regione e rimanda a OpenCoesione', async ({ page }) => {

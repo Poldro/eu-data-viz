@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Lobby from '../components/pages/Lobby.svelte';
+---
+
+<Base
+  title="Chi fa lobbying a Bruxelles"
+  description="Le organizzazioni iscritte al Registro per la trasparenza dell’Unione europea: quanto dichiarano di spendere, da dove vengono e quali leggi seguono."
+>
+  <Lobby client:load />
+</Base>

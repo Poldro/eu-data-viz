@@ -5,10 +5,10 @@
  *   pnpm data             tutte le fonti
  *   pnpm data --skip-fts       senza il file dei beneficiari
  *   pnpm data --skip-projects  senza i progetti OpenCoesione (il passo più lento)
- *   pnpm data --only=rrf       un solo passo: cohesion, historic, rrf, fts, projects
+ *   pnpm data --only=rrf       un solo passo: cohesion, historic, rrf, fts, projects, lobby
  */
-import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { createReadStream, existsSync, readFileSync } from 'node:fs';
+import { mkdir, open, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { z } from 'zod';
@@ -17,10 +17,14 @@ import { buildCube1420, buildCube2127, cubePlannedTotal, QUERY_1420, QUERY_2127,
 import { eurostatUrl, fetchEurostat } from './eurostat';
 import { aggregateFts, FtsRow } from './fts';
 import { buildHistoric, QUERY_REGIONAL, QUERY_YEARLY, RawRegional, RawYearly } from './historic';
+import { aggregateLobby, parseRecord, registerMeta, splitRecords, type RegisterOrg } from './lobby';
 import { fetchProjects, SITE as OPENCOESIONE_SITE } from './opencoesione';
 import { fetchGeometry, GEOMETRY_PAGE, POPULATION_DATASET, POPULATION_YEAR, populationByCode, prepareGeometry } from './regions';
 import { buildRrf, DATASET_RECEIVED, DATASET_USES } from './rrf';
 import { datasetUrl, soql } from './socrata';
+import { ACTS } from '../src/lib/acts';
+import type { FtsSummary } from '../src/lib/fts';
+import { entityKey } from '../src/lib/lobby';
 import type { Meta } from '../src/lib/meta';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -35,6 +39,12 @@ const MIN_REGION_COVERAGE = 0.93;
 const FTS_YEAR = 2025;
 const FTS_URL = `https://ec.europa.eu/budget/financial-transparency-system/download/${FTS_YEAR}_FTS_dataset_en.xlsx`;
 const FTS_PAGE = 'https://ec.europa.eu/budget/financial-transparency-system/';
+const LOBBY_CACHE_DIR = path.join(ROOT, '.cache/lobby');
+const REGISTER_URL = 'https://transparency-register.europa.eu/odplastorganisationxml_en';
+const REGISTER_PAGE = 'https://data.europa.eu/data/datasets/transparency-register';
+/** Sotto queste soglie l'estrazione è monca o l'elenco degli atti non trova più i dossier dichiarati. */
+const MIN_REGISTER_ORGANISATIONS = 10_000;
+const MIN_ACT_COVERAGE = 0.15;
 
 /** Intervalli plausibili del totale pianificato (euro): fuori da qui c'è un doppio conteggio o un buco. */
 const SANITY: Record<string, [number, number]> = {
@@ -158,10 +168,49 @@ async function fts(): Promise<Meta['sources']> {
   return [{ id: 'fts', name: `Financial Transparency System ${FTS_YEAR}`, url: FTS_PAGE, asOf: String(FTS_YEAR) }];
 }
 
+async function lobby(): Promise<Meta['sources']> {
+  // Letto subito, prima di ogni attesa: il passo fts gira in parallelo e potrebbe riscrivere il file a metà lettura.
+  const ftsPath = path.join(OUT_DIR, 'fts.json');
+  const beneficiaries: FtsSummary['top'] = existsSync(ftsPath) ? (JSON.parse(readFileSync(ftsPath, 'utf8')) as FtsSummary).top : [];
+  // Il Registro cambia ogni giorno: l'estrazione scaricata vale per la giornata.
+  const file = path.join(LOBBY_CACHE_DIR, `${new Date().toISOString().slice(0, 10)}.xml`);
+  if (!existsSync(file)) {
+    await mkdir(LOBBY_CACHE_DIR, { recursive: true });
+    const res = await fetch(REGISTER_URL, { signal: AbortSignal.timeout(600_000) });
+    if (!res.ok || !res.body) throw new Error(`Registro per la trasparenza: HTTP ${res.status}`);
+    // Si scrive su un file provvisorio: uno scaricamento interrotto non deve passare per buono.
+    await writeFile(`${file}.part`, res.body);
+    await rename(`${file}.part`, file);
+  }
+  const handle = await open(file);
+  const head = await handle.read({ buffer: Buffer.alloc(2048), position: 0 });
+  await handle.close();
+  const { exportDate, declared } = registerMeta(head.buffer.toString('utf8', 0, head.bytesRead));
+
+  const register: RegisterOrg[] = [];
+  for await (const record of splitRecords(createReadStream(file, { encoding: 'utf8' }))) register.push(parseRecord(record));
+  if (register.length !== declared || register.length < MIN_REGISTER_ORGANISATIONS) {
+    throw new Error(`Registro per la trasparenza: ${register.length} schede lette, ${declared} dichiarate`);
+  }
+  const data = aggregateLobby(register, ACTS, exportDate, {
+    topPerKind: 250,
+    topPerCountry: 30,
+    topPerAct: 12,
+    // Chi compare anche tra i beneficiari dei fondi a gestione diretta resta in elenco: serve al confronto tra i due archivi.
+    keep: new Set(beneficiaries.map((b) => entityKey(b.name, b.country))),
+  });
+  if (data.matched / data.organisations < MIN_ACT_COVERAGE) {
+    throw new Error(`Registro per la trasparenza: solo ${data.matched} iscritti su ${data.organisations} nominano un atto in elenco`);
+  }
+  process.stdout.write(`Registro: ${data.organisations} iscritti, ${data.withCosts} con costi dichiarati, ${data.matched} nominano un atto in elenco\n`);
+  await writeJson('lobby.json', data);
+  return [{ id: 'lobby', name: 'Registro per la trasparenza dell’Unione europea', url: REGISTER_PAGE, asOf: exportDate.slice(0, 7) }];
+}
+
 async function main(): Promise<void> {
   // --only=projects esegue un solo passo; --skip-fts e --skip-projects saltano i due più lenti.
   const only = process.argv.find((arg) => arg.startsWith('--only='))?.slice('--only='.length);
-  const all = { cohesion, historic, rrf, fts, projects };
+  const all = { cohesion, historic, rrf, fts, projects, lobby };
   const wanted = Object.entries(all).filter(([name]) => (only ? name === only : !process.argv.includes(`--skip-${name}`)));
   if (wanted.length === 0) throw new Error(`Nessun passo da eseguire (passi disponibili: ${Object.keys(all).join(', ')})`);
   await mkdir(OUT_DIR, { recursive: true });

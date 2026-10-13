@@ -4,12 +4,14 @@
  */
 import ftsJson from '../data/fts.json';
 import historicJson from '../data/historic.json';
+import lobbyJson from '../data/lobby.json';
 import projectsJson from '../data/projects.json';
 import rrfJson from '../data/rrf.json';
 import { HOME_COUNTRY, isMemberState } from './countries';
 import { eur, int, pct, perHead } from './format';
 import type { FtsSummary } from './fts';
 import { regionValues, type Historic } from './historic';
+import type { LobbySummary } from './lobby';
 import { CYCLES, type Projects } from './projects';
 import { rrfTotals, type Rrf } from './rrf';
 
@@ -75,6 +77,16 @@ function recovery(): Teaser {
   };
 }
 
+function lobby(): Teaser {
+  const data = lobbyJson as LobbySummary;
+  return {
+    headline: `${int(data.organisations)} organizzazioni dichiarano almeno ${eur(data.min)} l’anno di lobbying`,
+    values: data.byCategory.filter((c) => c.min > 0).map((c) => c.min),
+    highlight: -1,
+    chartLabel: 'Spesa dichiarata per tipo di organizzazione',
+  };
+}
+
 export function staticTeasers(): Record<string, Teaser> {
-  return { regioni: regions(), progetti: projects(), beneficiari: beneficiaries(), pnrr: recovery() };
+  return { regioni: regions(), progetti: projects(), beneficiari: beneficiaries(), pnrr: recovery(), lobby: lobby() };
 }

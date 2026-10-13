@@ -17,6 +17,7 @@ export const SECTIONS: readonly Section[] = [
   { id: 'progetti', href: '/progetti/', label: 'Progetti', blurb: 'I cantieri e gli interventi finanziati in Italia, uno per uno.' },
   { id: 'pnrr', href: '/pnrr/', label: 'PNRR', blurb: 'Il piano di ripresa: quanto è arrivato e quanto è stato speso.' },
   { id: 'beneficiari', href: '/beneficiari/', label: 'Beneficiari', blurb: 'Chi incassa i fondi gestiti direttamente da Bruxelles.' },
+  { id: 'lobby', href: '/lobby/', label: 'Lobby', blurb: 'Chi dichiara di fare pressione a Bruxelles, quanto spende e su quali leggi.' },
   { id: 'metodo', href: '/metodo/', label: 'Metodo', blurb: 'Fonti, definizioni e limiti dei numeri.' },
 ];
 

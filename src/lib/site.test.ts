@@ -61,7 +61,7 @@ describe('anticipazioni della prima pagina', () => {
       expect(teaser.values.every(Number.isFinite)).toBe(true);
       expect(teaser.highlight).toBeLessThan(teaser.values.length);
     }
-    expect(Object.keys(teasers)).toEqual(expect.arrayContaining(['regioni', 'progetti', 'pnrr', 'beneficiari']));
+    expect(Object.keys(teasers)).toEqual(expect.arrayContaining(['regioni', 'progetti', 'pnrr', 'beneficiari', 'lobby']));
   });
 });
 
