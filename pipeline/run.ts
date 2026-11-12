@@ -68,7 +68,10 @@ function assertPlausible(period: string, total: number): void {
 }
 
 async function writeJson(name: string, data: unknown): Promise<void> {
-  await writeFile(path.join(OUT_DIR, name), JSON.stringify(data));
+  // Scrittura atomica: i passi girano in parallelo e lobby legge fts.json mentre fts può riscriverlo.
+  const file = path.join(OUT_DIR, name);
+  await writeFile(`${file}.part`, JSON.stringify(data));
+  await rename(`${file}.part`, file);
 }
 
 async function singleValue(id: string, select: string, where?: string): Promise<string> {
